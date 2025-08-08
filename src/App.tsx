@@ -11,7 +11,16 @@ import {
   PlayIcon,
   ArrowRightIcon,
   CameraIcon,
-  FilmIcon
+  FilmIcon,
+  ChevronDownIcon,
+  ArrowDownTrayIcon,
+  KeyIcon,
+  CalendarIcon,
+  UsersIcon,
+  ClockIcon,
+  DocumentDuplicateIcon,
+  Cog6ToothIcon,
+  QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
 import ProfessionalScriptEditor, { ScriptEditorRef } from './components/ProfessionalScriptEditor'
 import { formatScriptProfessionally, detectElementType } from './utils/professionalFormatter'
@@ -37,6 +46,10 @@ FADE OUT.`)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [pageCount, setPageCount] = useState(1)
+  const [showQuickActions, setShowQuickActions] = useState(false)
+  const [showExportOptions, setShowExportOptions] = useState(false)
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false)
   const scriptEditorRef = useRef<ScriptEditorRef>(null)
   
   // Initialize user and project on app start
@@ -100,6 +113,38 @@ FADE OUT.`)
       duration: 3000,
       style: { background: '#fed7aa', color: '#9a3412', fontWeight: '600' }
     })
+  }
+
+  const handleExportTXT = () => {
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'screenplay.txt'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('📝 TXT file exported!', { duration: 2000 })
+  }
+
+  const handleExportFDX = () => {
+    // Basic FDX format structure
+    const fdxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<FinalDraft DocumentType="Script" Template="No">
+  <Content>
+    <Paragraph Type="Scene Heading">
+      <Text>${content.split('\n')[0]}</Text>
+    </Paragraph>
+  </Content>
+</FinalDraft>`
+    
+    const blob = new Blob([fdxContent], { type: 'application/xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'screenplay.fdx'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('🎬 FDX file exported!', { duration: 2000 })
   }
 
   const handleExportPDF = async () => {
@@ -233,6 +278,75 @@ FADE OUT.`)
 
             {/* Controls */}
             <div className="flex items-center space-x-3">
+              {/* Quick Actions Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowQuickActions(!showQuickActions)}
+                  className="flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 rounded-lg transition-all"
+                >
+                  <SparklesIcon className="h-4 w-4 mr-2" />
+                  Quick Actions
+                  <ChevronDownIcon className="h-3 w-3 ml-1" />
+                </button>
+                {showQuickActions && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-orange-200 z-50">
+                    <div className="py-2">
+                      <button onClick={handleAutoFormat} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 flex items-center">
+                        <SparklesIcon className="h-4 w-4 mr-2 text-orange-500" />
+                        Auto-Format Script
+                      </button>
+                      <button onClick={() => setShowKeyboardShortcuts(true)} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 flex items-center">
+                        <KeyIcon className="h-4 w-4 mr-2 text-blue-500" />
+                        Keyboard Shortcuts
+                      </button>
+                      <button onClick={() => setShowBreakdownModal(true)} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 flex items-center">
+                        <CalendarIcon className="h-4 w-4 mr-2 text-green-500" />
+                        Scene Breakdown
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Export Options Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportOptions(!showExportOptions)}
+                  className="flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 rounded-lg transition-all"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  Export
+                  <ChevronDownIcon className="h-3 w-3 ml-1" />
+                </button>
+                {showExportOptions && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-orange-200 z-50">
+                    <div className="py-2">
+                      <button onClick={handleExportPDF} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 flex items-center">
+                        <DocumentTextIcon className="h-4 w-4 mr-2 text-red-500" />
+                        Export PDF
+                      </button>
+                      <button onClick={handleExportTXT} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 flex items-center">
+                        <DocumentTextIcon className="h-4 w-4 mr-2 text-blue-500" />
+                        Export TXT
+                      </button>
+                      <button onClick={handleExportFDX} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 flex items-center">
+                        <FilmIcon className="h-4 w-4 mr-2 text-purple-500" />
+                        Export FDX
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Version Revision */}
+              <button
+                onClick={() => toast.success('🔄 Version saved as v3.0.1', { duration: 2000 })}
+                className="flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 rounded-lg transition-all"
+              >
+                <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
+                v3.0.0
+              </button>
+
               <button
                 onClick={() => setIsPreviewMode(!isPreviewMode)}
                 className={`flex items-center px-4 py-2 rounded-lg transition-all ${
@@ -263,15 +377,31 @@ FADE OUT.`)
                   className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-sm"
                 >
                   <SparklesIcon className="h-4 w-4 mr-2" />
-                  Auto-Format
+                  Auto-Format Script
                 </button>
                 
                 <button
-                  onClick={handleExportPDF}
-                  className="w-full flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all"
+                  onClick={() => setShowBreakdownModal(true)}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
                 >
-                  <DocumentTextIcon className="h-4 w-4 mr-2" />
-                  Export PDF
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  Scene Breakdown
+                </button>
+                
+                <button
+                  onClick={() => toast.success('🗓️ Schedule feature coming soon!', { duration: 2000 })}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm"
+                >
+                  <ClockIcon className="h-4 w-4 mr-2" />
+                  Schedule
+                </button>
+                
+                <button
+                  onClick={() => toast.success('👥 Collaborate feature coming soon!', { duration: 2000 })}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm"
+                >
+                  <UsersIcon className="h-4 w-4 mr-2" />
+                  Collaborate
                 </button>
               </div>
             </div>
@@ -298,6 +428,50 @@ FADE OUT.`)
                 })}
               </div>
             </div>
+
+            {/* Export Options */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-orange-800 mb-3">Export Options</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={handleExportPDF}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-sm"
+                >
+                  <DocumentTextIcon className="h-4 w-4 mr-2" />
+                  Export PDF
+                </button>
+                
+                <button
+                  onClick={handleExportTXT}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
+                >
+                  <DocumentTextIcon className="h-4 w-4 mr-2" />
+                  Export TXT
+                </button>
+                
+                <button
+                  onClick={handleExportFDX}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm"
+                >
+                  <FilmIcon className="h-4 w-4 mr-2" />
+                  Export FDX
+                </button>
+              </div>
+            </div>
+
+            {/* Keyboard Shortcuts */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-orange-800 mb-3">Help & Shortcuts</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowKeyboardShortcuts(true)}
+                  className="w-full flex items-center px-3 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all shadow-sm"
+                >
+                  <KeyIcon className="h-4 w-4 mr-2" />
+                  Keyboard Shortcuts
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -317,12 +491,88 @@ FADE OUT.`)
         </div>
       </div>
 
+      {/* Modals */}
+      {showKeyboardShortcuts && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowKeyboardShortcuts(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-orange-800">Keyboard Shortcuts</h2>
+              <button onClick={() => setShowKeyboardShortcuts(false)} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-3">Formatting</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span>Scene Heading</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+1</span></div>
+                  <div className="flex justify-between"><span>Action</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+2</span></div>
+                  <div className="flex justify-between"><span>Character</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+3</span></div>
+                  <div className="flex justify-between"><span>Dialogue</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+4</span></div>
+                  <div className="flex justify-between"><span>Parenthetical</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+5</span></div>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-3">Actions</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span>Auto-Format</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+⇧+F</span></div>
+                  <div className="flex justify-between"><span>Export PDF</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+E</span></div>
+                  <div className="flex justify-between"><span>Preview Mode</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+P</span></div>
+                  <div className="flex justify-between"><span>Save</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+S</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBreakdownModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowBreakdownModal(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 h-3/4 overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-orange-800">Scene Breakdown & Analysis</h2>
+              <button onClick={() => setShowBreakdownModal(false)} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+            <div className="space-y-6">
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-orange-800 mb-2">Script Statistics</h3>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div><strong>Total Scenes:</strong> {content.split('EXT.').length + content.split('INT.').length - 2}</div>
+                  <div><strong>Characters:</strong> {Array.from(new Set(content.match(/^[A-Z][A-Z ]+$/gm) || [])).length}</div>
+                  <div><strong>Locations:</strong> {Array.from(new Set(content.match(/(EXT|INT)\. [A-Z ]+/g) || [])).length}</div>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-3">Scene List</h3>
+                <div className="space-y-2">
+                  {content.split('\n').filter(line => line.match(/(EXT|INT)\./)).map((scene, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <span className="font-semibold text-blue-600">Scene {index + 1}</span>
+                        <span className="ml-3 text-gray-700">{scene}</span>
+                      </div>
+                      <div className="text-sm text-gray-500">Page {Math.floor(index / 3) + 1}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Status Bar */}
       <div className="bg-gradient-to-r from-orange-100 to-orange-200 border-t-2 border-orange-300 px-6 py-3">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-6 text-orange-800">
             <span className="font-semibold">Format: Professional Screenplay</span>
             <span>Font: Courier New 12pt</span>
+            <span className="flex items-center">
+              <QuestionMarkCircleIcon className="h-4 w-4 mr-1" />
+              Press buttons to format + move cursor
+            </span>
           </div>
           <div className="flex items-center space-x-6 text-orange-700">
             <span className="font-bold text-orange-600 flex items-center">

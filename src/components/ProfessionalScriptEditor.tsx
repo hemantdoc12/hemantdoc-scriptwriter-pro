@@ -46,12 +46,38 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
         const newValue = value.substring(0, lineStart) + formattedLine + value.substring(lineEnd)
         onChange(newValue)
         
-        // Position cursor at end of formatted line
+        // Enhanced cursor positioning with Celtx-style movement
         setTimeout(() => {
-          const newCursorPos = lineStart + formattedLine.length
+          let newCursorPos = lineStart + formattedLine.length
+          
+          // Move cursor to next line for certain elements (Celtx behavior)
+          if (elementType === 'character') {
+            // After character formatting, move to next line and prepare for dialogue
+            newCursorPos = lineStart + formattedLine.length
+            if (!value.substring(newCursorPos).startsWith('\n')) {
+              const withNewLine = value.substring(0, newCursorPos) + '\n' + value.substring(newCursorPos)
+              onChange(withNewLine)
+              newCursorPos += 1
+            } else {
+              newCursorPos += 1
+            }
+          } else if (elementType === 'scene_heading') {
+            // After scene heading, move to next line for action
+            if (!value.substring(newCursorPos).startsWith('\n\n')) {
+              const withNewLines = value.substring(0, newCursorPos) + '\n\n' + value.substring(newCursorPos)
+              onChange(withNewLines)
+              newCursorPos += 2
+            } else {
+              newCursorPos += 2
+            }
+          }
+          
           textarea.setSelectionRange(newCursorPos, newCursorPos)
           textarea.focus()
           textarea.scrollIntoView({ block: 'nearest' })
+          
+          // Visual feedback for cursor position
+          textarea.style.caretColor = '#f97316'
         }, 0)
       },
 
