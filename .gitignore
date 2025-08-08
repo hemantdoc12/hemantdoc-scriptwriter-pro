@@ -1,9 +1,32 @@
 # Dependencies
 node_modules/
+electron/node_modules/
 
-# Production build files
+# Production build files - keep web dist, ignore electron dist
 dist/
+electron/dist/
 
 # Development files  
 *.log
 .DS_Store
+.env
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Electron builder output
+release/
+build/
+
+# Temporary files
+tmp/
+temp/
