@@ -20,7 +20,7 @@ export interface ScriptEditorRef {
   getCurrentElementType: () => string
 }
 
-interface ProfessionalScriptEditorProps {
+interface EnhancedScriptEditorProps {
   value: string
   onChange: (value: string) => void
   isPreviewMode: boolean
@@ -28,7 +28,7 @@ interface ProfessionalScriptEditorProps {
   placeholder?: string
 }
 
-const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptEditorProps>(
+const EnhancedScriptEditor = forwardRef<ScriptEditorRef, EnhancedScriptEditorProps>(
   ({ value, onChange, isPreviewMode, className = '', placeholder }, ref) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const overlayRef = useRef<HTMLDivElement>(null)
@@ -48,8 +48,8 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
         // Get current line boundaries
         const beforeCursor = value.substring(0, start)
         const afterCursor = value.substring(end)
-        const lastNewline = beforeCursor.lastIndexOf('\\n')
-        const nextNewline = afterCursor.indexOf('\\n')
+        const lastNewline = beforeCursor.lastIndexOf('\n')
+        const nextNewline = afterCursor.indexOf('\n')
         
         const lineStart = lastNewline + 1
         const lineEnd = nextNewline === -1 ? value.length : end + nextNewline
@@ -62,9 +62,14 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
         const newValue = value.substring(0, lineStart) + formattedLine + value.substring(lineEnd)
         onChange(newValue)
         
-        // Enhanced cursor positioning with Celtx-style movement
+        // Enhanced cursor positioning with visual guides and tooltips
         setTimeout(() => {
           let newCursorPos = lineStart + formattedLine.length
+          
+          // Show tooltip for element positioning
+          setTooltipElement(elementType)
+          setShowTooltip(true)
+          setTimeout(() => setShowTooltip(false), 3000)
           
           // Move cursor to next line for certain elements (Celtx behavior)
           if (elementType === 'character') {
@@ -92,8 +97,13 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
           textarea.focus()
           textarea.scrollIntoView({ block: 'nearest' })
           
-          // Visual feedback for cursor position
-          textarea.style.caretColor = '#f97316'
+          // Visual feedback for cursor position with element color
+          const elementColor = ELEMENT_COLORS[elementType as keyof typeof ELEMENT_COLORS]?.border || '#f97316'
+          textarea.style.caretColor = elementColor
+          
+          // Update active element for visual feedback
+          setActiveElement(elementType)
+          updateCursorPosition()
         }, 0)
       },
 
@@ -124,8 +134,8 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
         const start = textareaRef.current.selectionStart
         const beforeCursor = value.substring(0, start)
         const afterCursor = value.substring(start)
-        const lastNewline = beforeCursor.lastIndexOf('\\n')
-        const nextNewline = afterCursor.indexOf('\\n')
+        const lastNewline = beforeCursor.lastIndexOf('\n')
+        const nextNewline = afterCursor.indexOf('\n')
         
         const lineStart = lastNewline + 1
         const lineEnd = nextNewline === -1 ? value.length : start + nextNewline
@@ -135,10 +145,10 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
       getCurrentElementType: () => {
         if (!textareaRef.current) return 'action'
         
-        const lines = value.split('\\n')
+        const lines = value.split('\n')
         const start = textareaRef.current.selectionStart
         const beforeCursor = value.substring(0, start)
-        const currentLineIndex = beforeCursor.split('\\n').length - 1
+        const currentLineIndex = beforeCursor.split('\n').length - 1
         
         return detectElementType(lines[currentLineIndex] || '', lines, currentLineIndex)
       }
@@ -191,6 +201,9 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
     }
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+
       // Professional formatting shortcuts
       if (e.metaKey || e.ctrlKey) {
         const shortcuts: Record<string, string> = {
@@ -208,91 +221,136 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
           if (ref && 'current' in ref && ref.current) {
             ref.current.formatCurrentLine(shortcuts[e.key])
           }
+          return
         }
       }
 
-      // Auto-format on Enter
+      // Enhanced auto-formatting on Enter - Celtx style
       if (e.key === 'Enter') {
         setTimeout(() => {
-          // Detect element type and apply smart formatting
-          const lines = value.split('\\n')
-          const textarea = textareaRef.current
-          if (!textarea) return
-          
+          const lines = value.split('\n')
           const start = textarea.selectionStart
           const beforeCursor = value.substring(0, start)
-          const currentLineIndex = beforeCursor.split('\\n').length - 1
-          const currentLine = lines[currentLineIndex - 1] || ''
+          const currentLineIndex = beforeCursor.split('\n').length - 2 // Previous line
+          const currentLine = lines[currentLineIndex] || ''
           
-          const elementType = detectElementType(currentLine, lines, currentLineIndex - 1)
-          
-          // Smart continuation for dialogue
-          if (elementType === 'character' && currentLine.trim()) {
-            // After character name, next line should be dialogue
-            if (ref && 'current' in ref && ref.current) {
-              setTimeout(() => ref.current?.formatCurrentLine('dialogue'), 10)
+          if (currentLine.trim()) {
+            const elementType = detectElementType(currentLine, lines, currentLineIndex)
+            
+            // Celtx-style smart formatting continuation
+            if (elementType === 'character' && ref && 'current' in ref && ref.current) {
+              // After character name, automatically format next line as dialogue
+              setTimeout(() => {
+                if (ref.current) {
+                  ref.current.formatCurrentLine('dialogue')
+                }
+              }, 20)
+            } else if (elementType === 'scene_heading' && ref && 'current' in ref && ref.current) {
+              // After scene heading, next line is typically action
+              setTimeout(() => {
+                if (ref.current) {
+                  ref.current.formatCurrentLine('action')
+                }
+              }, 20)
             }
           }
         }, 0)
       }
+
+      // Real-time formatting detection on typing
+      if (e.key.match(/[a-zA-Z0-9\s]/)) {
+        setTimeout(() => {
+          const start = textarea.selectionStart
+          const beforeCursor = value.substring(0, start)
+          const lines = beforeCursor.split('\n')
+          const currentLine = lines[lines.length - 1] || ''
+          
+          // Auto-detect common patterns and suggest formatting
+          if (currentLine.match(/^(EXT|INT)\./i) && !currentLine.includes('FORMATTED')) {
+            // Detected scene heading pattern
+            if (ref && 'current' in ref && ref.current) {
+              setTimeout(() => ref.current?.formatCurrentLine('scene_heading'), 100)
+            }
+          } else if (currentLine.match(/^[A-Z][A-Z ]+$/) && currentLine.length > 1 && !currentLine.includes('FORMATTED')) {
+            // Detected character name pattern
+            if (ref && 'current' in ref && ref.current) {
+              setTimeout(() => ref.current?.formatCurrentLine('character'), 100)
+            }
+          } else if (currentLine.match(/^\(.+\)$/) && !currentLine.includes('FORMATTED')) {
+            // Detected parenthetical pattern
+            if (ref && 'current' in ref && ref.current) {
+              setTimeout(() => ref.current?.formatCurrentLine('parenthetical'), 100)
+            }
+          }
+        }, 300) // Debounced auto-detection
+      }
     }, [value, ref])
 
-    const getElementCSS = (elementType: string): React.CSSProperties => {
+    const getElementCSS = (elementType: string, isSelected: boolean = false): React.CSSProperties => {
+      const colorScheme = ELEMENT_COLORS[elementType as keyof typeof ELEMENT_COLORS] || ELEMENT_COLORS.action
+      
+      const baseStyle = {
+        fontFamily: 'Courier New, monospace',
+        fontSize: '12pt',
+        lineHeight: '1.2',
+        minHeight: '24px',
+        marginBottom: '0px',
+        color: colorScheme.text,
+        backgroundColor: isSelected ? colorScheme.bg : 'transparent',
+        borderLeft: isSelected ? `4px solid ${colorScheme.border}` : 'none',
+        paddingLeft: isSelected ? '8px' : '0px',
+        transition: 'all 0.2s ease',
+        position: 'relative' as const
+      }
+
       const styles: Record<string, React.CSSProperties> = {
         scene_heading: {
+          ...baseStyle,
           fontWeight: 'bold',
           textTransform: 'uppercase',
-          marginLeft: '0in',
-          marginTop: '24px',
-          marginBottom: '0px',
-          color: '#1e40af'
+          marginLeft: '0px',
+          marginTop: '24px'
         },
         character: {
+          ...baseStyle,
           fontWeight: 'bold', 
           textTransform: 'uppercase',
           textAlign: 'center',
           marginLeft: '220px', // 3.7 inches - Celtx style
-          marginTop: '12px',
-          marginBottom: '0px',
-          color: '#dc2626'
+          marginTop: '12px'
         },
         dialogue: {
+          ...baseStyle,
           marginLeft: '100px', // 1.5 inches
           marginRight: '120px', // 2.5 inches from right
-          marginTop: '0px',
-          marginBottom: '0px',
-          color: '#374151'
+          marginTop: '0px'
         },
         parenthetical: {
+          ...baseStyle,
           fontStyle: 'italic',
           textAlign: 'center',
           marginLeft: '160px', // 2 inches
-          marginTop: '0px', 
-          marginBottom: '0px',
-          color: '#6b7280'
+          marginTop: '0px'
         },
         action: {
+          ...baseStyle,
           marginLeft: '0px',
           marginRight: '60px', // 1 inch
-          marginTop: '12px',
-          marginBottom: '0px',
-          color: '#374151'
+          marginTop: '12px'
         },
         transition: {
+          ...baseStyle,
           fontWeight: 'bold',
           textTransform: 'uppercase',
           textAlign: 'right',
-          marginTop: '12px',
-          marginBottom: '0px',
-          color: '#ec4899'
+          marginTop: '12px'
         },
         shot: {
+          ...baseStyle,
           fontWeight: 'bold',
           textTransform: 'uppercase', 
           marginLeft: '0px',
-          marginTop: '12px',
-          marginBottom: '0px',
-          color: '#7c3aed'
+          marginTop: '12px'
         }
       }
       
@@ -302,25 +360,23 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
     if (isPreviewMode) {
       return (
         <div className={`flex-1 w-full p-8 overflow-y-auto bg-white ${className}`}>
-          {value.split('\\n').map((line, index) => {
-            const lines = value.split('\\n')
+          {value.split('\n').map((line, index) => {
+            const lines = value.split('\n')
             const elementType = detectElementType(line, lines, index)
-            const elementCSS = getElementCSS(elementType)
+            const isCurrentLine = index === cursorPosition.line
+            const elementCSS = getElementCSS(elementType, isCurrentLine)
             
             return (
               <div 
                 key={index} 
-                style={{
-                  ...elementCSS,
-                  fontFamily: 'Courier New, monospace',
-                  fontSize: '12pt',
-                  lineHeight: '1.2',
-                  minHeight: line.trim() ? 'auto' : '24px',
-                  marginBottom: '0px'
-                }}
-                title={`${elementType.replace('_', ' ').toUpperCase()}`}
+                style={elementCSS}
+                title={`${elementType.replace('_', ' ').toUpperCase()}: ${getTooltipContent(elementType)}`}
+                className={`screenplay-${elementType.replace('_', '-')} ${isCurrentLine ? 'current-line' : ''}`}
               >
-                {line || '\\u00A0'}
+                {isCurrentLine && (
+                  <div className="absolute -left-4 top-0 w-2 h-full bg-orange-400 rounded-r" />
+                )}
+                {line || '\u00A0'}
               </div>
             )
           })}
@@ -329,12 +385,43 @@ const ProfessionalScriptEditor = forwardRef<ScriptEditorRef, ProfessionalScriptE
     }
 
     return (
-      <div className={`flex-1 flex flex-col ${className}`}>
+      <div className={`flex-1 flex flex-col ${className} relative`}>
+        {/* Position Guide Overlay */}
+        <div className="absolute top-2 right-2 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
+          <div className="text-xs font-mono text-gray-600">
+            <div>Line {cursorPosition.line + 1}, Col {cursorPosition.col + 1}</div>
+            <div className="flex items-center mt-1">
+              <div 
+                className="w-3 h-3 rounded-full mr-2" 
+                style={{ backgroundColor: ELEMENT_COLORS[activeElement as keyof typeof ELEMENT_COLORS]?.border || '#6b7280' }}
+              />
+              <span className="capitalize text-xs font-semibold">
+                {activeElement.replace('_', ' ')}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tooltip */}
+        {showTooltip && (
+          <div className="absolute top-16 left-8 z-20 bg-black text-white text-sm rounded-lg px-3 py-2 max-w-md shadow-lg">
+            <div className="font-semibold mb-1 capitalize">{tooltipElement.replace('_', ' ')} Positioned</div>
+            <div className="text-xs opacity-90">{getTooltipContent(tooltipElement)}</div>
+            <div className="absolute -top-1 left-4 w-2 h-2 bg-black transform rotate-45" />
+          </div>
+        )}
+
+        {/* Main Editor */}
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            onChange(e.target.value)
+            updateCursorPosition()
+          }}
           onKeyDown={handleKeyDown}
+          onSelect={updateCursorPosition}
+          onClick={updateCursorPosition}
           placeholder={placeholder || `FADE IN:
 
 EXT. YOUR STORY - DAY
@@ -342,13 +429,13 @@ EXT. YOUR STORY - DAY
 Start writing your professional screenplay here...
 
 🎬 PROFESSIONAL FEATURES:
-• Industry-standard formatting with Celtx-style positioning
-• Character names centered, dialogue properly indented  
-• Real-time auto-save & scene numbering
-• Export to PDF with professional positioning
+• Industry-standard formatting with color coding
+• Visual cursor positioning guides  
+• Real-time element detection & tooltips
+• Professional PDF export positioning
 • Full keyboard shortcuts (⌘1-7 for elements)
 
-Begin typing to experience professional scriptwriting!
+Click format buttons to see positioning guides!
 
 FADE OUT.`}
           className="flex-1 w-full p-8 border-none outline-none resize-none bg-white"
@@ -357,7 +444,8 @@ FADE OUT.`}
             fontSize: '12pt',
             lineHeight: '1.2',
             color: '#000000',
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            caretColor: ELEMENT_COLORS[activeElement as keyof typeof ELEMENT_COLORS]?.border || '#f97316'
           }}
           spellCheck={false}
         />
@@ -366,6 +454,6 @@ FADE OUT.`}
   }
 )
 
-ProfessionalScriptEditor.displayName = 'ProfessionalScriptEditor'
+EnhancedScriptEditor.displayName = 'EnhancedScriptEditor'
 
-export default ProfessionalScriptEditor
+export default EnhancedScriptEditor
