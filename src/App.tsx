@@ -22,7 +22,7 @@ import {
   Cog6ToothIcon,
   QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
-import EnhancedScriptEditor, { ScriptEditorRef } from './components/EnhancedScriptEditor'
+import WorkingScriptEditor, { ScriptEditorRef } from './components/WorkingScriptEditor'
 import { formatScriptProfessionally, detectElementType } from './utils/professionalFormatter'
 
 export default function App() {
@@ -97,12 +97,19 @@ FADE OUT.`)
   }, [updateScriptContent])
 
   const handleElementFormat = (elementType: string) => {
+    console.log('🔥 Format button clicked in App:', elementType)
+    console.log('📋 Script editor ref:', scriptEditorRef.current)
+    
     if (scriptEditorRef.current) {
+      console.log('✅ Calling formatCurrentLine...')
       scriptEditorRef.current.formatCurrentLine(elementType)
       toast.success(`🎯 Formatted as ${elementType.replace('_', ' ').toUpperCase()}`, {
-        duration: 1000,
+        duration: 2000,
         style: { background: '#fed7aa', color: '#9a3412', fontWeight: '600' }
       })
+    } else {
+      console.error('❌ Script editor ref is null!')
+      toast.error('Editor not ready. Please try again.')
     }
   }
 
@@ -479,7 +486,7 @@ FADE OUT.`)
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 p-8 flex flex-col">
             <div className="bg-white rounded-2xl shadow-xl border-2 border-orange-200 flex-1 flex flex-col min-h-0">
-              <EnhancedScriptEditor
+              <WorkingScriptEditor
                 ref={scriptEditorRef}
                 value={content}
                 onChange={handleContentChange}
