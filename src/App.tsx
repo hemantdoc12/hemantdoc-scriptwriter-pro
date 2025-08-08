@@ -76,8 +76,11 @@ FADE OUT.`)
     setWordCount(words)
     setPageCount(pages)
     
-    // Auto-save to project store
-    updateScriptContent(newContent)
+    // Auto-save to project store with debouncing
+    clearTimeout((window as any).saveTimer)
+    ;(window as any).saveTimer = setTimeout(() => {
+      updateScriptContent(newContent)
+    }, 1000)
   }, [updateScriptContent])
 
   const handleElementFormat = (elementType: string) => {
