@@ -22,8 +22,9 @@ import {
   Cog6ToothIcon,
   QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
-import ProfessionalArchitectureEditor, { ScriptEditorRef } from './components/ProfessionalArchitectureEditor'
+import ProfessionalVerticalStackEditor, { ScriptEditorRef } from './components/ProfessionalVerticalStackEditor'
 import { formatScriptProfessionally, detectElementType } from './utils/professionalFormatter'
+import { useKeyboardShortcuts, KEYBOARD_SHORTCUTS } from './hooks/useKeyboardShortcuts'
 
 export default function App() {
   const { currentProject, createProject, updateScriptContent } = useProjectStore()
@@ -71,13 +72,13 @@ FADE OUT.`)
 
   // Format buttons configuration
   const formatButtons = [
-    { type: 'scene_heading', label: 'Scene Heading', icon: FilmIcon, shortcut: '⌘1', color: 'bg-blue-500' },
-    { type: 'action', label: 'Action', icon: PlayIcon, shortcut: '⌘2', color: 'bg-green-500' },
-    { type: 'character', label: 'Character', icon: UserIcon, shortcut: '⌘3', color: 'bg-red-500' },
-    { type: 'dialogue', label: 'Dialogue', icon: ChatBubbleLeftRightIcon, shortcut: '⌘4', color: 'bg-purple-500' },
-    { type: 'parenthetical', label: 'Parenthetical', icon: DocumentTextIcon, shortcut: '⌘5', color: 'bg-yellow-500' },
-    { type: 'transition', label: 'Transition', icon: ArrowRightIcon, shortcut: '⌘6', color: 'bg-pink-500' },
-    { type: 'shot', label: 'Shot', icon: CameraIcon, shortcut: '⌘7', color: 'bg-indigo-500' }
+    { type: 'SceneHeading', label: 'Scene Heading', icon: FilmIcon, shortcut: '⌘1', color: 'bg-blue-500' },
+    { type: 'Action', label: 'Action', icon: PlayIcon, shortcut: '⌘2', color: 'bg-green-500' },
+    { type: 'Character', label: 'Character', icon: UserIcon, shortcut: '⌘3', color: 'bg-red-500' },
+    { type: 'Dialogue', label: 'Dialogue', icon: ChatBubbleLeftRightIcon, shortcut: '⌘4', color: 'bg-purple-500' },
+    { type: 'Parenthetical', label: 'Parenthetical', icon: DocumentTextIcon, shortcut: '⌘5', color: 'bg-yellow-500' },
+    { type: 'Transition', label: 'Transition', icon: ArrowRightIcon, shortcut: '⌘6', color: 'bg-pink-500' },
+    { type: 'Shot', label: 'Shot', icon: CameraIcon, shortcut: '⌘7', color: 'bg-indigo-500' }
   ]
 
   const handleContentChange = useCallback((newContent: string) => {
@@ -103,7 +104,7 @@ FADE OUT.`)
     if (scriptEditorRef.current) {
       console.log('✅ Calling formatCurrentLine...')
       scriptEditorRef.current.formatCurrentLine(elementType)
-      toast.success(`🎯 Formatted as ${elementType.replace('_', ' ').toUpperCase()}`, {
+      toast.success(`🎯 Formatted as ${elementType}`, {
         duration: 2000,
         style: { background: '#fed7aa', color: '#9a3412', fontWeight: '600' }
       })
@@ -112,6 +113,90 @@ FADE OUT.`)
       toast.error('Editor not ready. Please try again.')
     }
   }
+
+  // Keyboard shortcuts handlers
+  const handleFormatShortcut = (format: string) => {
+    handleElementFormat(format)
+  }
+
+  const handleFileOperation = (operation: string) => {
+    switch (operation) {
+      case 'new':
+        setContent('')
+        toast.success('📄 New script created')
+        break
+      case 'save':
+        toast.success('💾 Script saved')
+        break
+      case 'exportPDF':
+        handleExportPDF()
+        break
+      case 'exportTXT':
+        handleExportTXT()
+        break
+      case 'exportFDX':
+        handleExportFDX()
+        break
+      default:
+        toast(`${operation} feature coming soon!`, { icon: 'ℹ️' })
+    }
+  }
+
+  const handleNavigation = (action: string) => {
+    switch (action) {
+      case 'togglePreview':
+        setIsPreviewMode(!isPreviewMode)
+        break
+      case 'keyboardShortcuts':
+        setShowKeyboardShortcuts(true)
+        break
+      case 'find':
+        toast('🔍 Find feature coming soon!', { icon: 'ℹ️' })
+        break
+      default:
+        toast(`${action} feature coming soon!`, { icon: 'ℹ️' })
+    }
+  }
+
+  const handleEditing = (action: string) => {
+    toast(`${action} handled by browser`, { icon: 'ℹ️' })
+  }
+
+  const handleSmartFeature = (action: string) => {
+    switch (action) {
+      case 'autoFormat':
+        handleAutoFormat()
+        break
+      case 'toggleComment':
+        toast('💬 Comment feature coming soon!', { icon: 'ℹ️' })
+        break
+      case 'duplicateLine':
+        toast('📋 Duplicate line feature coming soon!', { icon: 'ℹ️' })
+        break
+      default:
+        toast(`${action} feature coming soon!`, { icon: 'ℹ️' })
+    }
+  }
+
+  const handleProduction = (action: string) => {
+    switch (action) {
+      case 'scriptBreakdown':
+        setShowBreakdownModal(true)
+        break
+      default:
+        toast(`${action} feature coming soon!`, { icon: 'ℹ️' })
+    }
+  }
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    onFormatShortcut: handleFormatShortcut,
+    onFileOperation: handleFileOperation,
+    onNavigation: handleNavigation,
+    onEditing: handleEditing,
+    onSmartFeature: handleSmartFeature,
+    onProduction: handleProduction
+  })
 
   const handleAutoFormat = () => {
     const formattedContent = formatScriptProfessionally(content)
@@ -351,7 +436,7 @@ FADE OUT.`)
                 className="flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 rounded-lg transition-all"
               >
                 <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
-                v3.0.0
+                v4.0.0
               </button>
 
               <button
@@ -486,7 +571,7 @@ FADE OUT.`)
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 p-8 flex flex-col">
             <div className="bg-white rounded-2xl shadow-xl border-2 border-orange-200 flex-1 flex flex-col min-h-0">
-              <ProfessionalArchitectureEditor
+              <ProfessionalVerticalStackEditor
                 ref={scriptEditorRef}
                 value={content}
                 onChange={handleContentChange}
@@ -498,35 +583,173 @@ FADE OUT.`)
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Keyboard Shortcuts Modal */}
       {showKeyboardShortcuts && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowKeyboardShortcuts(false)}>
-          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl p-8 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-orange-800">Keyboard Shortcuts</h2>
-              <button onClick={() => setShowKeyboardShortcuts(false)} className="text-gray-500 hover:text-gray-700">
+              <h2 className="text-3xl font-bold text-orange-800">Keyboard Shortcuts</h2>
+              <button onClick={() => setShowKeyboardShortcuts(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
                 ✕
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            
+            <div className="mb-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-sm text-orange-800 font-semibold">Pro Tip:</p>
+              <p className="text-sm text-orange-700">All shortcuts work in both editing and preview modes</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Script Formatting */}
               <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Formatting</h3>
+                <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center">
+                  <FilmIcon className="h-5 w-5 mr-2 text-blue-500" />
+                  Script Formatting
+                </h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span>Scene Heading</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+1</span></div>
-                  <div className="flex justify-between"><span>Action</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+2</span></div>
-                  <div className="flex justify-between"><span>Character</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+3</span></div>
-                  <div className="flex justify-between"><span>Dialogue</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+4</span></div>
-                  <div className="flex justify-between"><span>Parenthetical</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+5</span></div>
+                  {KEYBOARD_SHORTCUTS.formatting.map((shortcut, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-gray-700">{shortcut.label}</span>
+                      <div className="flex">
+                        {shortcut.shortcut.split('+').map((key, i) => (
+                          <span key={i} className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mx-0.5">
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              {/* File Operations */}
               <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Actions</h3>
+                <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center">
+                  <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
+                  File Operations
+                </h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span>Auto-Format</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+⇧+F</span></div>
-                  <div className="flex justify-between"><span>Export PDF</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+E</span></div>
-                  <div className="flex justify-between"><span>Preview Mode</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+P</span></div>
-                  <div className="flex justify-between"><span>Save</span><span className="font-mono bg-gray-100 px-2 py-1 rounded">⌘+S</span></div>
+                  {KEYBOARD_SHORTCUTS.fileOperations.map((shortcut, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-gray-700">{shortcut.label}</span>
+                      <div className="flex">
+                        {shortcut.shortcut.split('+').map((key, i) => (
+                          <span key={i} className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mx-0.5">
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              {/* Navigation & View */}
+              <div>
+                <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center">
+                  <EyeIcon className="h-5 w-5 mr-2 text-purple-500" />
+                  Navigation & View
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {KEYBOARD_SHORTCUTS.navigation.map((shortcut, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-gray-700">{shortcut.label}</span>
+                      <div className="flex">
+                        {shortcut.shortcut.split('+').map((key, i) => (
+                          <span key={i} className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mx-0.5">
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Editing */}
+              <div>
+                <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center">
+                  <KeyIcon className="h-5 w-5 mr-2 text-red-500" />
+                  Editing
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {KEYBOARD_SHORTCUTS.editing.map((shortcut, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-gray-700">{shortcut.label}</span>
+                      <div className="flex">
+                        {shortcut.shortcut.split('+').map((key, i) => (
+                          <span key={i} className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mx-0.5">
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Smart Features */}
+              <div>
+                <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center">
+                  <SparklesIcon className="h-5 w-5 mr-2 text-yellow-500" />
+                  Smart Features
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {KEYBOARD_SHORTCUTS.smartFeatures.map((shortcut, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-gray-700">{shortcut.label}</span>
+                      <div className="flex">
+                        {shortcut.shortcut.split('+').map((key, i) => (
+                          <span key={i} className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mx-0.5">
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Production Tools */}
+              <div>
+                <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center">
+                  <CalendarIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  Production Tools
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {KEYBOARD_SHORTCUTS.production.map((shortcut, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-gray-700">{shortcut.label}</span>
+                      <div className="flex">
+                        {shortcut.shortcut.split('+').map((key, i) => (
+                          <span key={i} className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mx-0.5">
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Start Tips */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="font-bold text-blue-800 mb-2">Quick Start Tips</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Type "INT." or "EXT." and the line will auto-format as a scene heading</li>
+                <li>• Character names in ALL CAPS will be auto-detected and formatted</li>
+                <li>• Press Tab to accept autocomplete suggestions</li>
+                <li>• Use Enter after character names for automatic dialogue indentation</li>
+                <li>• The script auto-saves every 2 seconds while typing</li>
+              </ul>
+              <div className="mt-3 text-center">
+                <button 
+                  onClick={() => setShowKeyboardShortcuts(false)}
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Got it, thanks!
+                </button>
               </div>
             </div>
           </div>
@@ -545,24 +768,85 @@ FADE OUT.`)
             <div className="space-y-6">
               <div className="bg-orange-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-orange-800 mb-2">Script Statistics</h3>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div><strong>Total Scenes:</strong> {content.split('EXT.').length + content.split('INT.').length - 2}</div>
-                  <div><strong>Characters:</strong> {Array.from(new Set(content.match(/^[A-Z][A-Z ]+$/gm) || [])).length}</div>
-                  <div><strong>Locations:</strong> {Array.from(new Set(content.match(/(EXT|INT)\. [A-Z ]+/g) || [])).length}</div>
+                <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div><strong>Total Lines:</strong> {content.split('\n').length}</div>
+                  <div><strong>Scene Headings:</strong> {content.split('\n').filter(line => /^(INT\.|EXT\.)/i.test(line.trim())).length}</div>
+                  <div><strong>Characters:</strong> {Array.from(new Set(content.split('\n').filter(line => /^[A-Z][A-Z\s\-']{1,}(\s\(.*\))?$/.test(line.trim()) && line.trim().length < 50))).length}</div>
+                  <div><strong>Dialogue Lines:</strong> {content.split('\n').filter(line => line.trim() && !/^(INT\.|EXT\.|[A-Z][A-Z\s\-']{1,}(\s\(.*\))?$|\(.*\)|CUT TO:|FADE)/.test(line.trim())).length}</div>
                 </div>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3">Scene Headings</h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {content.split('\n')
+                      .map((line, index) => ({ line: line.trim(), index }))
+                      .filter(item => /^(INT\.|EXT\.)/i.test(item.line))
+                      .map((scene, sceneIndex) => (
+                        <div key={sceneIndex} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1">
+                            <span className="font-semibold text-blue-600">Scene {sceneIndex + 1}</span>
+                            <span className="ml-3 text-gray-700 text-sm">{scene.line}</span>
+                          </div>
+                          <div className="text-xs text-gray-500">Line {scene.index + 1}</div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3">Characters</h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {Array.from(new Set(
+                      content.split('\n')
+                        .filter(line => /^[A-Z][A-Z\s\-']{1,}(\s\(.*\))?$/.test(line.trim()) && line.trim().length < 50)
+                        .map(line => line.trim().replace(/\s\(.*\)$/, ''))
+                    )).sort().map((character, index) => {
+                      const dialogueCount = content.split('\n')
+                        .filter((line, i) => {
+                          const prevLine = content.split('\n')[i - 1]
+                          return prevLine && prevLine.trim().startsWith(character) && line.trim() && !line.trim().startsWith('(')
+                        }).length
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="font-medium text-red-600">{character}</span>
+                          <span className="text-xs text-gray-500">{dialogueCount} lines</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+              
               <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Scene List</h3>
-                <div className="space-y-2">
-                  {content.split('\n').filter(line => line.match(/(EXT|INT)\./)).map((scene, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <span className="font-semibold text-blue-600">Scene {index + 1}</span>
-                        <span className="ml-3 text-gray-700">{scene}</span>
-                      </div>
-                      <div className="text-sm text-gray-500">Page {Math.floor(index / 3) + 1}</div>
+                <h3 className="font-semibold text-gray-800 mb-3">Format Breakdown</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <div className="font-bold text-blue-600 text-lg">
+                      {content.split('\n').filter(line => /^(INT\.|EXT\.)/i.test(line.trim())).length}
                     </div>
-                  ))}
+                    <div className="text-blue-800 text-xs">Scene Headings</div>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-lg text-center">
+                    <div className="font-bold text-red-600 text-lg">
+                      {Array.from(new Set(content.split('\n').filter(line => /^[A-Z][A-Z\s\-']{1,}(\s\(.*\))?$/.test(line.trim()) && line.trim().length < 50))).length}
+                    </div>
+                    <div className="text-red-800 text-xs">Characters</div>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded-lg text-center">
+                    <div className="font-bold text-yellow-600 text-lg">
+                      {content.split('\n').filter(line => /^\(.*\)$/.test(line.trim())).length}
+                    </div>
+                    <div className="text-yellow-800 text-xs">Parentheticals</div>
+                  </div>
+                  <div className="bg-pink-50 p-3 rounded-lg text-center">
+                    <div className="font-bold text-pink-600 text-lg">
+                      {content.split('\n').filter(line => /^(CUT TO:|FADE TO:|DISSOLVE TO:)/i.test(line.trim())).length}
+                    </div>
+                    <div className="text-pink-800 text-xs">Transitions</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -578,13 +862,13 @@ FADE OUT.`)
             <span>Font: Courier New 12pt</span>
             <span className="flex items-center">
               <QuestionMarkCircleIcon className="h-4 w-4 mr-1" />
-              Press buttons to format + move cursor
+              Vertical Line Stack • Real Screenplay Editor
             </span>
           </div>
           <div className="flex items-center space-x-6 text-orange-700">
             <span className="font-bold text-orange-600 flex items-center">
               <div className="w-2 h-2 bg-orange-500 rounded-full mr-2" />
-              Professional Formatting System v3.0.0
+              Vertical Stack Professional Editor v4.0.0
             </span>
           </div>
         </div>
