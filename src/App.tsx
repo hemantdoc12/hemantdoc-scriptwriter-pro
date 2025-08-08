@@ -22,7 +22,7 @@ import {
   Cog6ToothIcon,
   QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
-import WorkingScriptEditor, { ScriptEditorRef } from './components/WorkingScriptEditor'
+import GoldStandardEditor, { ScriptEditorRef } from './components/GoldStandardEditor'
 import { formatScriptProfessionally, detectElementType } from './utils/professionalFormatter'
 
 export default function App() {
@@ -486,7 +486,7 @@ FADE OUT.`)
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 p-8 flex flex-col">
             <div className="bg-white rounded-2xl shadow-xl border-2 border-orange-200 flex-1 flex flex-col min-h-0">
-              <WorkingScriptEditor
+              <GoldStandardEditor
                 ref={scriptEditorRef}
                 value={content}
                 onChange={handleContentChange}
