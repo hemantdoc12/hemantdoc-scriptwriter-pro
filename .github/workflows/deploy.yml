@@ -1,0 +1,65 @@
+name: Deploy to GitHub Pages with Version Control
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Get version from package.json
+      id: package-version
+      run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+    - name: Create version info
+      run: |
+        echo "Build Info:" > dist/version.txt
+        echo "Version: ${{ steps.package-version.outputs.version }}" >> dist/version.txt
+        echo "Build Date: $(date)" >> dist/version.txt
+        echo "Commit: ${{ github.sha }}" >> dist/version.txt
+        echo "Branch: ${{ github.ref_name }}" >> dist/version.txt
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        
+    - name: Create Release
+      if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'RELEASE:')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.package-version.outputs.version }}
+        release_name: Release v${{ steps.package-version.outputs.version }}
+        body: |
+          ## What's Changed
+          - Automated release for version ${{ steps.package-version.outputs.version }}
+          - Deploy commit: ${{ github.sha }}
+          
+          ## Deployment
+          - Live at: https://hemantdoc12.github.io/hemantdoc-scriptwriter-pro/
+          - Build date: $(date)
+        draft: false
+        prerelease: false

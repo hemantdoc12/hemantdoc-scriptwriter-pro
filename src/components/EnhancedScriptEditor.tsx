@@ -257,33 +257,8 @@ const EnhancedScriptEditor = forwardRef<ScriptEditorRef, EnhancedScriptEditorPro
         }, 0)
       }
 
-      // Real-time formatting detection on typing
-      if (e.key.match(/[a-zA-Z0-9\s]/)) {
-        setTimeout(() => {
-          const start = textarea.selectionStart
-          const beforeCursor = value.substring(0, start)
-          const lines = beforeCursor.split('\n')
-          const currentLine = lines[lines.length - 1] || ''
-          
-          // Auto-detect common patterns and suggest formatting
-          if (currentLine.match(/^(EXT|INT)\./i) && !currentLine.includes('FORMATTED')) {
-            // Detected scene heading pattern
-            if (ref && 'current' in ref && ref.current) {
-              setTimeout(() => ref.current?.formatCurrentLine('scene_heading'), 100)
-            }
-          } else if (currentLine.match(/^[A-Z][A-Z ]+$/) && currentLine.length > 1 && !currentLine.includes('FORMATTED')) {
-            // Detected character name pattern
-            if (ref && 'current' in ref && ref.current) {
-              setTimeout(() => ref.current?.formatCurrentLine('character'), 100)
-            }
-          } else if (currentLine.match(/^\(.+\)$/) && !currentLine.includes('FORMATTED')) {
-            // Detected parenthetical pattern
-            if (ref && 'current' in ref && ref.current) {
-              setTimeout(() => ref.current?.formatCurrentLine('parenthetical'), 100)
-            }
-          }
-        }, 300) // Debounced auto-detection
-      }
+      // Disabled aggressive auto-formatting - let users complete typing
+      // Only auto-format on manual button clicks or specific patterns when user pauses
     }, [value, ref])
 
     const getElementCSS = (elementType: string, isSelected: boolean = false): React.CSSProperties => {
@@ -411,44 +386,80 @@ const EnhancedScriptEditor = forwardRef<ScriptEditorRef, EnhancedScriptEditorPro
           </div>
         )}
 
-        {/* Main Editor */}
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value)
-            updateCursorPosition()
-          }}
-          onKeyDown={handleKeyDown}
-          onSelect={updateCursorPosition}
-          onClick={updateCursorPosition}
-          placeholder={placeholder || `FADE IN:
+        {/* Live-Formatted Editor Container */}
+        <div className="flex-1 relative">
+          {/* Formatted Text Overlay */}
+          <div 
+            className="absolute inset-0 p-8 pointer-events-none overflow-y-auto"
+            style={{
+              fontFamily: 'Courier New, monospace',
+              fontSize: '12pt',
+              lineHeight: '1.2',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word'
+            }}
+          >
+            {value.split('\n').map((line, index) => {
+              const lines = value.split('\n')
+              const elementType = detectElementType(line, lines, index)
+              const isCurrentLine = index === cursorPosition.line
+              const elementCSS = getElementCSS(elementType, isCurrentLine)
+              
+              return (
+                <div 
+                  key={index} 
+                  style={{
+                    ...elementCSS,
+                    minHeight: '14.4px', // Match line height
+                    pointerEvents: 'none'
+                  }}
+                  className={`screenplay-${elementType.replace('_', '-')} ${isCurrentLine ? 'current-line' : ''}`}
+                >
+                  {isCurrentLine && (
+                    <div className="absolute -left-4 top-0 w-2 h-full bg-orange-400 rounded-r opacity-50" />
+                  )}
+                  <span style={{ opacity: 0 }}>{line || '\u00A0'}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Transparent Input Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value)
+              updateCursorPosition()
+            }}
+            onKeyDown={handleKeyDown}
+            onSelect={updateCursorPosition}
+            onClick={updateCursorPosition}
+            placeholder={placeholder || `FADE IN:
 
 EXT. YOUR STORY - DAY
 
 Start writing your professional screenplay here...
 
 🎬 PROFESSIONAL FEATURES:
-• Industry-standard formatting with color coding
+• Live color-coded formatting during typing
 • Visual cursor positioning guides  
-• Real-time element detection & tooltips
-• Professional PDF export positioning
-• Full keyboard shortcuts (⌘1-7 for elements)
-
-Click format buttons to see positioning guides!
+• Professional element detection
+• Click format buttons for instant positioning!
 
 FADE OUT.`}
-          className="flex-1 w-full p-8 border-none outline-none resize-none bg-white"
-          style={{
-            fontFamily: 'Courier New, monospace',
-            fontSize: '12pt',
-            lineHeight: '1.2',
-            color: '#000000',
-            backgroundColor: '#ffffff',
-            caretColor: ELEMENT_COLORS[activeElement as keyof typeof ELEMENT_COLORS]?.border || '#f97316'
-          }}
-          spellCheck={false}
-        />
+            className="flex-1 w-full p-8 border-none outline-none resize-none relative z-10"
+            style={{
+              fontFamily: 'Courier New, monospace',
+              fontSize: '12pt',
+              lineHeight: '1.2',
+              color: 'rgba(0,0,0,0.8)', // Semi-transparent to show overlay colors
+              backgroundColor: 'transparent',
+              caretColor: ELEMENT_COLORS[activeElement as keyof typeof ELEMENT_COLORS]?.border || '#f97316'
+            }}
+            spellCheck={false}
+          />
+        </div>
       </div>
     )
   }
