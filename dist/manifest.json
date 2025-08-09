@@ -1,0 +1,16 @@
+{
+  "name": "HemantDoc ScriptWriter Pro",
+  "short_name": "ScriptWriter Pro",
+  "description": "Professional screenwriting and production management suite",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "hemantdoc-scriptwriter-pro-electron",
+  "productName": "HemantDoc ScriptWriter Pro",
+  "version": "3.0.0",
+  "description": "Professional screenplay and production management application for macOS",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hemantdoc/scriptwriter-pro.git"
+  },
+  "author": {
+    "name": "HemantDoc",
+    "email": "contact@hemantdoc.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  }
+}
