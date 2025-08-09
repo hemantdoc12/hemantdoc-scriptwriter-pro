@@ -86,11 +86,7 @@ export default function App() {
   }, [updateScriptContent])
 
   const handleElementFormat = (elementType: string) => {
-    console.log('🔥 Format button clicked in App:', elementType)
-    console.log('📋 Script editor ref:', scriptEditorRef.current)
-    
     if (scriptEditorRef.current) {
-      console.log('✅ Calling formatCurrentLine...')
       scriptEditorRef.current.formatCurrentLine(elementType)
       toast.success(`🎯 Formatted as ${elementType}`, {
         duration: 2000,
@@ -234,35 +230,16 @@ export default function App() {
       const { jsPDF } = await import('jspdf')
       const pdf = new jsPDF('portrait', 'pt', 'letter')
       
-      // AGGRESSIVE DEBUGGING - CHECK REF AND FORMATTED LINES
-      console.log('🔍 CHECKING SCRIPT EDITOR REF:', {
-        refExists: !!scriptEditorRef.current,
-        refCurrent: scriptEditorRef.current,
-        refMethods: scriptEditorRef.current ? Object.keys(scriptEditorRef.current) : 'NO REF'
-      })
-      
       let formattedLines: any[] = []
       if (scriptEditorRef.current && scriptEditorRef.current.getFormattedLines) {
-        console.log('✅ REF EXISTS - Getting formatted lines...')
         formattedLines = scriptEditorRef.current.getFormattedLines()
-        console.log('🔥 GOT FORMATTED LINES FROM EDITOR:', {
-          count: formattedLines.length,
-          firstFew: formattedLines.slice(0, 3),
-          sample: formattedLines.find(line => line.format !== 'Action')
-        })
       } else {
-        console.log('❌ NO REF OR METHOD - falling back to text processing')
-        console.log('Content being processed:', content.substring(0, 200) + '...')
         // Fallback to text processing
         const contentWithSceneNumbers = addSceneNumbers(content)
         formattedLines = contentWithSceneNumbers.split('\n').map((text, index) => ({
           text,
           format: detectElementType(text, contentWithSceneNumbers.split('\n'), index)
         }))
-        console.log('📝 FALLBACK LINES:', {
-          count: formattedLines.length, 
-          firstFew: formattedLines.slice(0, 3)
-        })
       }
       
       // INDUSTRY STANDARD MEASUREMENTS (in points) - ROOT CAUSE FIX
@@ -329,7 +306,6 @@ export default function App() {
         return lines
       }
       
-      console.log('📝 Processing formatted lines:', formattedLines.length)
       
       // Count scenes for numbering
       let sceneCount = 0
@@ -348,7 +324,6 @@ export default function App() {
         let xPosition = positions.action
         let maxWidth = maxWidths.action
         
-        console.log(`\n🔥 Processing formatted line ${i}: "${text}" (format: ${format})`)
         
         // Map editor format names to PDF positioning
         const formatMapping = {
@@ -371,47 +346,38 @@ export default function App() {
           const upperText = text.toUpperCase()
           processedText = upperText.match(/^\d+\./) ? upperText : `${sceneCount}. ${upperText}`
           yPosition += 8
-          console.log(`   ✅ SCENE HEADING from editor - xPos: ${xPosition}, scene: ${sceneCount}`)
         } else if (format === 'Character') {
           xPosition = positions.character  // 266pt = 3.7"
           maxWidth = maxWidths.character
           processedText = text.toUpperCase()
           yPosition += 8
-          console.log(`   ✅ CHARACTER from editor - xPos: ${xPosition}`)
         } else if (format === 'Parenthetical') {
           xPosition = positions.parenthetical  // 216pt = 3.0"
           maxWidth = maxWidths.parenthetical
-          console.log(`   ✅ PARENTHETICAL from editor - xPos: ${xPosition}`)
         } else if (format === 'Dialogue') {
           xPosition = positions.dialogue  // 144pt = 2.0"
           maxWidth = maxWidths.dialogue
-          console.log(`   ✅ DIALOGUE from editor - xPos: ${xPosition}`)
         } else if (format === 'Transition') {
           processedText = text.toUpperCase()
           const textWidth = pdf.getTextWidth(processedText)
           xPosition = positions.transition - textWidth
           maxWidth = maxWidths.transition
           yPosition += 8
-          console.log(`   ✅ TRANSITION from editor - xPos: ${xPosition}`)
         } else {
           // Default to action
           xPosition = positions.action
           maxWidth = maxWidths.action
-          console.log(`   ✅ ACTION from editor - xPos: ${xPosition}`)
         }
         
-        console.log(`   📍 Final positioning: format="${format}", xPosition=${xPosition}, yPosition=${yPosition}`)
         
         // Word wrap and render with processed text
         const wrappedLines = wrapText(processedText, maxWidth)
-        console.log(`   🖨️ Rendering ${wrappedLines.length} lines at xPosition=${xPosition}`)
         for (const wrappedLine of wrappedLines) {
           if (yPosition > pageHeight - margins.bottom - 50) {
             pdf.addPage()
             yPosition = margins.top
           }
           
-          console.log(`   📝 pdf.text("${wrappedLine}", ${xPosition}, ${yPosition})`)
           pdf.text(wrappedLine, xPosition, yPosition)
           yPosition += lineHeight
         }
@@ -419,21 +385,12 @@ export default function App() {
       
       // Page numbering will be added later when we fix the API issue
       
-      // MINIMAL POSITIONING TEST - Add test lines to verify jsPDF positioning works
-      console.log('🧪 ADDING POSITIONING TEST LINES')
+      // Set proper font
       pdf.setFontSize(12)
       pdf.setFont('courier', 'normal')
       
-      // Test line at different positions
-      pdf.text('LEFT MARGIN (108pt)', 108, 100)  // Should be at left margin
-      pdf.text('CHARACTER POSITION (266pt)', 266, 120)  // Should be at 3.7"  
-      pdf.text('DIALOGUE POSITION (144pt)', 144, 140)  // Should be at 2.0"
-      pdf.text('PARENTHETICAL (216pt)', 216, 160)  // Should be at 3.0"
-      
-      console.log('🧪 TEST LINES ADDED - Check positioning in PDF')
-      
       pdf.save('professional-screenplay.pdf')
-      toast.success('📄 Professional screenplay exported with positioning test!')
+      toast.success('📄 Professional screenplay exported successfully!')
     } catch (error) {
       console.error('PDF export failed:', error)
       toast.error('❌ PDF export failed.')
